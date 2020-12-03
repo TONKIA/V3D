@@ -1,0 +1,131 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xmlns:mvc="http://www.springframework.org/schema/mvc"
+       xmlns:aop="http://www.springframework.org/schema/aop"
+       xmlns:tx="http://www.springframework.org/schema/tx"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans
+        http://www.springframework.org/schema/beans/spring-beans.xsd
+        http://www.springframework.org/schema/context
+        http://www.springframework.org/schema/context/spring-context.xsd
+        http://www.springframework.org/schema/mvc
+        http://www.springframework.org/schema/mvc/spring-mvc.xsd
+        http://www.springframework.org/schema/aop
+        http://www.springframework.org/schema/aop/spring-aop.xsd
+        http://www.springframework.org/schema/tx
+        http://www.springframework.org/schema/tx/spring-tx.xsd">
+
+    <!--引入配置文件，多个用逗号隔开-->
+    <context:property-placeholder location="classpath:db.properties,classpath:cfg.properties"/>
+
+    <!-- 启用springmvc注解-->
+    <mvc:annotation-driven/>
+
+    <!-- 设置使用注解的类路径 -->
+    <context:component-scan base-package="com.tonkia.v3dmodel.controller,com.tonkia.v3dmodel.service.impl"/>
+    <!--<context:annotation-config/>-->
+
+    <!-- 静态文件处理  -->
+    <mvc:resources location="/css/" mapping="/css/**/"/>
+    <mvc:resources location="/js/" mapping="/js/**/"/>
+    <mvc:resources location="/img/" mapping="/img/**/"/>
+    <mvc:resources location="/ueditor/" mapping="/ueditor/**/"/>
+
+    <!-- 文件上传-->
+    <bean id="multipartResolver"
+          class="org.springframework.web.multipart.commons.CommonsMultipartResolver">
+        <property name="defaultEncoding" value="utf-8"/>
+        <property name="maxUploadSize" value="10240000"/>
+        <property name="maxInMemorySize" value="10240000"/>
+        <property name="resolveLazily" value="true"/>
+    </bean>
+
+    <!-- druid数据源 -->
+    <bean id="ds" class="com.alibaba.druid.pool.DruidDataSource" init-method="init" destroy-method="close">
+        <property name="driverClassName" value="${jdbc.driverClassName}"/>
+        <property name="url" value="${jdbc.url}"/>
+        <property name="username" value="${jdbc.username}"/>
+        <property name="password" value="${jdbc.password}"/>
+        <property name="initialSize" value="2"/>
+        <property name="minIdle" value="1"/>
+        <property name="maxActive" value="20"/>
+        <property name="maxWait" value="60000"/>
+        <property name="timeBetweenEvictionRunsMillis" value="60000"/>
+        <property name="minEvictableIdleTimeMillis" value="300000"/>
+        <property name="validationQuery" value="SELECT 'x' from dual "/>
+        <property name="testWhileIdle" value="true"/>
+        <property name="testOnBorrow" value="false"/>
+        <property name="testOnReturn" value="false"/>
+        <property name="poolPreparedStatements" value="true"/>
+        <property name="maxPoolPreparedStatementPerConnectionSize" value="20"/>
+    </bean>
+
+    <!-- 配置mybatis -->
+    <bean id="sessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean">
+        <property name="dataSource" ref="ds"/>
+    </bean>
+
+    <bean class="org.mybatis.spring.mapper.MapperScannerConfigurer">
+        <property name="sqlSessionFactoryBeanName" value="sessionFactory"/>
+        <property name="basePackage" value="com.tonkia.v3dmodel.mapper"/>
+    </bean>
+
+    <!-- 事务管理器 -->
+    <bean id="tm" class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+        <property name="dataSource" ref="ds"/>
+    </bean>
+    <tx:advice id="txAdvice" transaction-manager="tm">
+        <tx:attributes>
+            <tx:method name="insert*"/>
+            <tx:method name="delete*"/>
+            <tx:method name="update*"/>
+            <tx:method name="*" read-only="true"/>
+        </tx:attributes>
+    </tx:advice>
+    <aop:config>
+        <aop:advisor advice-ref="txAdvice" pointcut="execution(* com.tonkia.v3dmodel.service.impl.*.*(..))"/>
+    </aop:config>
+
+    <!--shiro-->
+    <!--<bean id="shiroFilter" class="org.apache.shiro.spring.web.ShiroFilterFactoryBean">-->
+    <!--<property name="securityManager" ref="securityManager"/>-->
+    <!--<property name="loginUrl" value="/login"/>-->
+    <!--<property name="unauthorizedUrl" value="/refuse"/>-->
+    <!--<property name="filterChainDefinitions">-->
+    <!--<value>-->
+    <!--/test/**=anon-->
+    <!--/=user-->
+    <!--/logout=logout-->
+    <!--/**=authc-->
+    <!--</value>-->
+    <!--</property>-->
+    <!--</bean>-->
+    <!--&lt;!&ndash;securityManager&ndash;&gt;-->
+    <!--<bean id="securityManager" class="org.apache.shiro.web.mgt.DefaultWebSecurityManager">-->
+    <!--<property name="realm" ref="userRealm"/>-->
+    <!--<property name="sessionManager" ref="sessionManager"/>-->
+    <!--&lt;!&ndash;<property name="cacheManager" ref="cacheManager"/>&ndash;&gt;-->
+    <!--</bean>-->
+    <!--<bean id="userRealm" class="com.tonkia.v3dmodel.realm.UserRealm"/>-->
+    <!--&lt;!&ndash;sessionManager&ndash;&gt;-->
+    <!--<bean id="sessionManager" class="org.apache.shiro.web.session.mgt.DefaultWebSessionManager">-->
+    <!--<property name="sessionIdUrlRewritingEnabled" value="false"/>-->
+    <!--<property name="deleteInvalidSessions" value="true"/>-->
+    <!--<property name="globalSessionTimeout" value="600000"/>-->
+    <!--</bean>-->
+    <!--&lt;!&ndash; Ehcache缓存&ndash;&gt;-->
+    <!--&lt;!&ndash;<bean id="cacheManager" class="org.apache.shiro.cache.ehcache.EhCacheManager"/>&ndash;&gt;-->
+    <!--&lt;!&ndash;启用注解&ndash;&gt;-->
+    <!--<bean id="lifecycleBeanPostProcessor" class="org.apache.shiro.spring.LifecycleBeanPostProcessor"/>-->
+    <!--<bean class="org.springframework.aop.framework.autoproxy.DefaultAdvisorAutoProxyCreator"-->
+    <!--depends-on="lifecycleBeanPostProcessor">-->
+    <!--<property name="proxyTargetClass" value="true"/>-->
+    <!--</bean>-->
+    <!--<bean class="org.apache.shiro.spring.security.interceptor.AuthorizationAttributeSourceAdvisor">-->
+    <!--<property name="securityManager" ref="securityManager"/>-->
+    <!--</bean>-->
+
+</beans>
+
+

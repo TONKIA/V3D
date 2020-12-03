@@ -1,0 +1,1 @@
+.v-enter{opacity:0;-webkit-transform:translateX(300px);transform:translateX(300px)}.v-leave-to{opacity:0;-webkit-transform:translateX(-300px);transform:translateX(-300px)}.v-enter-active,.v-leave-active{-webkit-transition:all .3s ease;transition:all .3s ease}.v-speed-dial{position:absolute}.v-btn--floating{position:relative}
